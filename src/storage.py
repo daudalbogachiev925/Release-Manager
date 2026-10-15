@@ -19,4 +19,22 @@ class ReleaseStorage:
         if not path.exists():
             return None
         data = json.loads(path.read_text(encoding="utf-8"))
-        data
+        data["status"] = ReleaseStatus(data["status"])
+        return Release(**data)
+
+    def list_all(self):
+        result = []
+        for p in sorted(self.folder.glob("*.json")):
+            try:
+                result.append(json.loads(p.read_text(encoding="utf-8")))
+            except Exception:
+                pass
+        return result
+
+    def latest(self):
+        releases = self.list_all()
+        if not releases:
+            return None
+        from src.version import Version
+        releases.sort(key=lambda r: Version.parse(r["version"]).__dict__.__str__())
+        return releases[-1]
